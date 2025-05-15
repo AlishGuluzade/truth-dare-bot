@@ -1,4 +1,4 @@
-# ‼️ Lazım olan kitabxanaları yükləyirik
+# ‼️ the necessary libraries
 import os
 import json
 import random
@@ -9,16 +9,16 @@ from telegram.ext import (
 )
 
 from database import init_db, get_or_create_user, save_answer
-# 🌱 .env faylından tokeni oxuyuruq
+# 🌱 .env Read TOCKEN
 load_dotenv()
 BOT_TOKEN = os.environ["BOT_TOKEN"]
 
-# 📥 JSON faylından sualları oxuyan funksiya
+# 📥 JSON Read Questions
 def load_questions():
     with open("questions.json", "r", encoding="utf-8") as f:
         return json.load(f)
 
-# 🚀 /start komandası
+# 🚀 /start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     telegram_id = update.effective_user.id
     username = update.effective_user.username or update.effective_user.first_name
@@ -26,45 +26,45 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     bot_user_id = get_or_create_user(telegram_id, username)
 
     await update.message.reply_text(
-        f"🎲 Doğruluq və Cəsarət oyununa xoş gəldin!\n"
-        f"Sənin istifadəçi ID-n: {bot_user_id}\n"
-        f"Əmrlər: /truth /dare /play"
+        f"🎲 Welcome to Truth and Dare Game!\n"
+        f"Your ID is: {bot_user_id}\n"
+        f"Commands: /truth /dare "
     )
 
 
-# 🟢 /truth komandası
+# 🟢 /truth command
 async def truth(update: Update, context: ContextTypes.DEFAULT_TYPE):
     data = load_questions()
     question = random.choice(data["truth"])
     user_id = update.effective_user.id
 
     keyboard = [[
-        InlineKeyboardButton("✅ Cavab verdim", callback_data=f"answered:{user_id}:truth")
+        InlineKeyboardButton("✅ Answered", callback_data=f"answered:{user_id}:truth")
     ]]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     await update.message.reply_text(
-        f"🟢 Doğruluq sualı:\n{question}",
+        f"🟢 Truth question:\n{question}",
         reply_markup=reply_markup
     )
 
-# 🔴 /dare komandası
+# 🔴 /dare command
 async def dare(update: Update, context: ContextTypes.DEFAULT_TYPE):
     data = load_questions()
     task = random.choice(data["dare"])
     user_id = update.effective_user.id
 
     keyboard = [[
-        InlineKeyboardButton("✅ Cavab verdim", callback_data = f"answered:{user_id}:dare")
+        InlineKeyboardButton("✅ Answered", callback_data = f"answered:{user_id}:dare")
     ]]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     await update.message.reply_text(
-        f"🔴 Cəsarət tapşırığı:\n{task}",
+        f"🔴 Dare task:\n{task}",
         reply_markup=reply_markup
     )
 
-# ✅ Butona klik ediləndə işləyir
+# ✅ When button click
 async def answered(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     user_clicking = query.from_user.id
@@ -75,25 +75,25 @@ async def answered(update: Update, context: ContextTypes.DEFAULT_TYPE):
     question_type = parts[2] if len(parts) > 2 else "unknown"
 
     if user_clicking != expected_id:
-        await query.answer("❗ Bu sual sənə aid deyil!", show_alert=True)
+        await query.answer("❗ This is not for you!", show_alert=True)
         return
 
-    # DB-yə yaz
+    # Database
     bot_user_id = get_or_create_user(user_clicking, username)
     save_answer(bot_user_id, question_type)
 
     await query.answer()
     await query.edit_message_reply_markup(reply_markup=None)
-    await query.message.reply_text("🔁 Növbəti sual üçün: /truth /dare /play")
+    await query.message.reply_text("🔁 Next questions: /truth /dare")
 
-# 🔧 Bot tətbiqi qurulur
+# 🔧 Bot applications
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("truth", truth))
 app.add_handler(CommandHandler("dare", dare))
 app.add_handler(CallbackQueryHandler(answered, pattern="^answered:"))
 
-# 🧠 Bazanı hazırla və botu işə sal
+# 🧠 Making ready Base and running bot
 init_db()
-print("✅ Bot işə düşdü...")
+print("✅ Bot is running...")
 app.run_polling()
