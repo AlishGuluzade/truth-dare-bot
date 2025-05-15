@@ -3,7 +3,7 @@ from datetime import datetime
 
 DB_NAME = "bot.db"
 
-# ✅ BAZA VƏ CƏDVƏLLƏRİ YARADIR
+# ✅ CREATES DATABASES AND TABLES
 def init_db():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
@@ -18,7 +18,7 @@ def init_db():
         )
     ''')
 
-    # answers cədvəli
+    # answers table
     c.execute('''
         CREATE TABLE IF NOT EXISTS answers (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -31,19 +31,19 @@ def init_db():
     conn.commit()
     conn.close()
 
-# ✅ İSTİFADƏÇİ YOXDURSA YARADIR, VARSA GERİ QAYTARIR
+# ✅ CREATE USER IF IT DOES NOT EXIST, RETURN IF IT DOES
 def get_or_create_user(telegram_id, username):
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
 
-    # Mövcud istifadəçini tap
+    # Find existing user
     c.execute('SELECT bot_user_id FROM users WHERE telegram_id = ?', (telegram_id,))
     row = c.fetchone()
 
     if row:
         bot_user_id = row[0]
     else:
-        # Sonuncu bot_user_id-ni tap
+        # Find the last bot_user_id
         c.execute("SELECT bot_user_id FROM users ORDER BY id DESC LIMIT 1")
         last_row = c.fetchone()
         if last_row:
@@ -52,7 +52,7 @@ def get_or_create_user(telegram_id, username):
         else:
             next_id = "USR-1001"
 
-        # Yeni istifadəçini əlavə et
+        # Add new user
         c.execute('''
             INSERT INTO users (telegram_id, username, bot_user_id)
             VALUES (?, ?, ?)
@@ -63,7 +63,7 @@ def get_or_create_user(telegram_id, username):
     conn.close()
     return bot_user_id
 
-# ✅ CAVABI YAZIR
+# ✅ WRITE THE ANSWER
 def save_answer(bot_user_id, question_type):
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
