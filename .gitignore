@@ -1,4 +1,4 @@
-.env
+# Ignore database and cache files
 bot.db
 __pycache__/
-*.save
+.env
